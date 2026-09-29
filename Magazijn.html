@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fusilados Hub - Magazijn</title>
   
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="fusilados.png">
+
+  <!-- Supabase CDN Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -21,11 +24,14 @@
     .card { background-color: #16181d; border: 1px solid #232730; border-radius: 14px; padding: 28px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
     .card h2 { font-size: 1.2rem; color: #ffffff; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 
+    /* WAREHOUSE PINCODE DISPLAY */
     .pin-display-box { background: #0f1013; border: 2px dashed #a855f7; border-radius: 12px; padding: 28px; text-align: center; margin-bottom: 24px; }
     .pin-title { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 8px; }
     .pin-code { font-size: 3.5rem; font-weight: 900; letter-spacing: 0.25em; color: #38bdf8; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4); margin: 10px 0; }
+    .pin-code.restricted { font-size: 1.5rem; letter-spacing: 0.05em; color: #ef4444; text-shadow: none; }
     .pin-month { font-size: 0.85rem; color: #64748b; }
 
+    /* FORM GRID */
     .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 20px; }
     .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
     .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: #0f1013; border: 1px solid #232730; border-radius: 8px; color: #fff; font-size: 0.9rem; outline: none; }
@@ -34,6 +40,7 @@
     .btn-add { padding: 10px 20px; background: #a855f7; color: #ffffff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.2s; height: 42px; }
     .btn-add:hover { background: #9333ea; }
 
+    /* REMINDERS LIST */
     .reminder-item { display: flex; justify-content: space-between; align-items: center; background: #0f1013; border: 1px solid #232730; border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; }
     .reminder-item.warning { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
     .reminder-item.expired { border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
@@ -42,6 +49,7 @@
     .reminder-info { display: flex; flex-direction: column; gap: 6px; }
     .reminder-title { font-size: 1rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
     .reminder-meta { font-size: 0.8rem; color: #94a3b8; }
+    
     .badge-days { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
     .badge-ok { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid #22c55e; }
     .badge-warn { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
@@ -81,7 +89,7 @@
     <div class="card">
       <h2>⏰ Huur-Afteller & Reminders</h2>
 
-      <!-- FORMULIER VOOR AUTOMATISCHE HUUR ADDEN -->
+      <!-- FORMULIER -->
       <form onsubmit="addReminder(event)" class="form-grid">
         <div class="form-group">
           <label>Magazijn / Omschrijving</label>
@@ -105,7 +113,7 @@
         <button type="submit" class="btn-add">+ Huur Instellen</button>
       </form>
 
-      <!-- LIJST MET GEAUTOMATISEERDE REMINDERS -->
+      <!-- LIJST MET REMINDERS -->
       <div id="remindersList">
         <p style="color: #64748b; text-align: center; font-style: italic;">Laden van herinneringen...</p>
       </div>
@@ -121,11 +129,11 @@
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const currentUser = sessionStorage.getItem("currentUser") || "Onbekend";
+  const currentRole = sessionStorage.getItem("currentRole") || "Gringo";
 
-  // ZET STANDAARD DATUM OP VANDAAG
   document.getElementById("remStartDate").valueAsDate = new Date();
 
-  // 1. MAANDELIJKSE AUTOMATISCHE 4-CIJFERIGE PINCODE GENERATOR
+  // 1. PINCODE GENERATOR EN ROLLENCONTROLE (OPPER GRINGO + HIGHER GRINGO)
   async function loadWarehouseData() {
     const now = new Date();
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -134,14 +142,28 @@
 
     document.getElementById("warehousePinMonth").innerText = `Geldig voor de maand: ${monthLabel}`;
 
-    const { data, error } = await _supabase
+    const pinElem = document.getElementById("warehousePinCode");
+
+    // Controleer of de rol "Opper Gringo" of "Higher Gringo" is
+    const isAllowedRole = currentRole === "Opper Gringo" || currentRole === "Higher Gringo";
+
+    if (!isAllowedRole) {
+      pinElem.innerText = "🔒 GEHEIM (Alleen Higher Gringo+)";
+      pinElem.classList.add("restricted");
+      return;
+    }
+
+    // Bevoegde rol -> Haal de echte code op
+    pinElem.classList.remove("restricted");
+
+    const { data } = await _supabase
       .from('warehouse_data')
       .select('*')
       .eq('month_year', currentMonthKey)
       .single();
 
     if (data && data.pincode) {
-      document.getElementById("warehousePinCode").innerText = data.pincode;
+      pinElem.innerText = data.pincode;
     } else {
       const newPin = Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -151,14 +173,14 @@
       }]);
 
       if (!insertErr) {
-        document.getElementById("warehousePinCode").innerText = newPin;
+        pinElem.innerText = newPin;
       } else {
-        document.getElementById("warehousePinCode").innerText = "FOUT";
+        pinElem.innerText = "FOUT";
       }
     }
   }
 
-  // 2. AUTOMATISCHE AFTELLER & REMINDERS
+  // 2. LAAD HUUR REMINDERS
   async function loadReminders() {
     const container = document.getElementById("remindersList");
     const { data, error } = await _supabase
@@ -195,7 +217,7 @@
       if (diffDays <= 7 && diffDays >= 0) {
         badgeClass = "badge-warn";
         itemClass = "warning";
-        statusTxt = `⚠️ Vervalt over ${diffDays} dag(en)!`;
+        statusTxt = `⚠️️ Vervalt over ${diffDays} dag(en)!`;
       } else if (diffDays < 0) {
         badgeClass = "badge-exp";
         itemClass = "expired";
@@ -226,7 +248,7 @@
     });
   }
 
-  // 3. NIEUWE HUUR TOEVOEGEN MET AUTOMATISCHE DATUMBEREKENING
+  // 3. TOEVOEGEN
   async function addReminder(e) {
     e.preventDefault();
     const title = document.getElementById("remTitle").value.trim();
@@ -240,14 +262,23 @@
 
     const due_date = dueDate.toISOString().split('T')[0];
 
-    const { error } = await _supabase.from('warehouse_reminders').insert([{
+    let payload = {
       title,
       amount,
       start_date: startDateStr,
       due_date,
       period_days: periodDays,
       created_by: currentUser
-    }]);
+    };
+
+    let { error } = await _supabase.from('warehouse_reminders').insert([payload]);
+
+    if (error && error.message.includes('column')) {
+      delete payload.start_date;
+      delete payload.period_days;
+      const res = await _supabase.from('warehouse_reminders').insert([payload]);
+      error = res.error;
+    }
 
     if (error) {
       alert("Fout bij instellen: " + error.message);
@@ -263,7 +294,7 @@
     }
   }
 
-  // 4. HUUR VERLENGEN MET 28 OF 7 DAGEN
+  // 4. VERLENGEN
   async function extendRent(id, currentDueDateStr, periodDays) {
     const currentDueDate = new Date(currentDueDateStr);
     const newDueDate = new Date(currentDueDate);
@@ -281,14 +312,14 @@
       return;
     }
 
-    alert(`Huur succesvol verlengd met ${periodDays} dagen! Nieuwe vervaldatum: ${newDueDate.toLocaleDateString('nl-NL')}`);
+    alert(`Huur succesvol verlengd! Nieuwe vervaldatum: ${newDueDate.toLocaleDateString('nl-NL')}`);
     loadReminders();
     if (window.parent && window.parent.checkRentRemindersBanner) {
       window.parent.checkRentRemindersBanner();
     }
   }
 
-  // 5. STATUS AFVINKEN
+  // 5. AFVINKEN
   async function togglePaid(id, status) {
     await _supabase.from('warehouse_reminders').update({ is_paid: status }).eq('id', id);
     loadReminders();
