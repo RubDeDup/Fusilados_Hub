@@ -13,7 +13,26 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background-color: #0f1013; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
+    body { background-color: #0f1013; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* BLAUWE MELDINGSBANNER BOVENAAN */
+    .rent-alert-banner {
+      background: linear-gradient(90deg, #0284c7, #38bdf8);
+      color: #0f172a;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+      z-index: 999;
+    }
+    .rent-alert-text { display: flex; align-items: center; gap: 8px; }
+    .close-alert-btn { background: rgba(15, 23, 42, 0.2); border: 1px solid rgba(15, 23, 42, 0.4); color: #0f172a; padding: 4px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    .close-alert-btn:hover { background: rgba(15, 23, 42, 0.4); color: #fff; }
+
+    .main-wrapper { display: flex; flex: 1; height: calc(100vh - 40px); overflow: hidden; }
 
     .sidebar { width: 260px; background-color: #16181d; border-right: 1px solid #232730; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 16px; flex-shrink: 0; }
     
@@ -46,7 +65,7 @@
     .btn-logout { width: 100%; background: #ef4444; color: #ffffff; border: none; padding: 8px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
     .btn-logout:hover { background: #dc2626; }
 
-    .content-area { flex: 1; height: 100vh; background-color: #0f1013; }
+    .content-area { flex: 1; height: 100%; background-color: #0f1013; }
     iframe { width: 100%; height: 100%; border: none; }
 
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -61,57 +80,62 @@
 </head>
 <body>
 
-  <script>
-    if (window.top !== window.self) {
-      window.top.location.href = window.location.href;
-    }
-  </script>
-
-  <div class="sidebar">
-    <div>
-      <div class="brand-section" onclick="openHome()" title="Ga naar Kruispunt">
-        <img src="fusilados.png" alt="Fusilados Logo" class="brand-logo">
-        <span class="brand-title">Fusilados Hub</span>
-      </div>
-
-      <div class="nav-section-title">CATEGORIEËN</div>
-      <ul class="nav-list">
-        <li class="nav-item active" id="navMinigames" onclick="loadGame(this, 'MinigamesHome.html?v=3')">
-          <span>🎮 Minigames Hub</span>
-          <span class="arrow">&gt;</span>
-        </li>
-        <li class="nav-item" id="navWiet" onclick="loadGame(this, 'Wiet_Ingave.html?v=3')">
-          <span>🌿 Wiet Ingave Systeem</span>
-          <span class="arrow">&gt;</span>
-        </li>
-        <li class="nav-item" id="navFinancien" onclick="loadGame(this, 'Financien.html?v=2')">
-          <span>💰 Bende Financiën</span>
-          <span class="arrow">&gt;</span>
-        </li>
-        <li class="nav-item" id="navMagazijn" onclick="loadGame(this, 'Magazijn.html?v=3')">
-          <span>🏬 Magazijn & Huur</span>
-          <span class="arrow">&gt;</span>
-        </li>
-      </ul>
+  <!-- BLAUWE MELDINGSBANNER BOVENAAN VOOR HUUR REMINDERS -->
+  <div class="rent-alert-banner" id="rentAlertBanner">
+    <div class="rent-alert-text">
+      <span>📢</span>
+      <span id="rentAlertMsg">Laden van huurstatus...</span>
     </div>
-
-    <div class="user-section">
-      <div class="user-card">
-        <div class="user-name" id="displayUsername">Laden...</div>
-        <div class="user-role" id="displayRole">...</div>
-        <button class="btn-password" onclick="openPasswordModal()">Wachtwoord Wijzigen</button>
-      </div>
-
-      <div class="admin-link" id="adminPanelLink" style="display: none;" onclick="loadGame(null, 'Admin.html')">
-        ⚙️ Admin Beheer
-      </div>
-
-      <button class="btn-logout" onclick="logout()">Uitloggen</button>
-    </div>
+    <button class="close-alert-btn" onclick="closeRentAlert()">✖ Sluiten</button>
   </div>
 
-  <div class="content-area">
-    <iframe id="mainFrame" name="mainFrame" src="Home.html?v=3"></iframe>
+  <div class="main-wrapper">
+    <div class="sidebar">
+      <div>
+        <div class="brand-section" onclick="openHome()" title="Ga naar Kruispunt">
+          <img src="fusilados.png" alt="Fusilados Logo" class="brand-logo">
+          <span class="brand-title">Fusilados Hub</span>
+        </div>
+
+        <div class="nav-section-title">CATEGORIEËN</div>
+        <ul class="nav-list">
+          <li class="nav-item active" id="navMinigames" onclick="loadGame(this, 'MinigamesHome.html?v=3')">
+            <span>🎮 Minigames Hub</span>
+            <span class="arrow">&gt;</span>
+          </li>
+          <li class="nav-item" id="navWiet" onclick="loadGame(this, 'Wiet_Ingave.html?v=3')">
+            <span>🌿 Wiet Ingave Systeem</span>
+            <span class="arrow">&gt;</span>
+          </li>
+          <li class="nav-item" id="navFinancien" onclick="loadGame(this, 'Financien.html?v=2')">
+            <span>💰 Bende Financiën</span>
+            <span class="arrow">&gt;</span>
+          </li>
+          <li class="nav-item" id="navMagazijn" onclick="loadGame(this, 'Magazijn.html?v=2')">
+            <span>🏬 Magazijn & Huur</span>
+            <span class="arrow">&gt;</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="user-section">
+        <div class="user-card">
+          <div class="user-name" id="displayUsername">Laden...</div>
+          <div class="user-role" id="displayRole">...</div>
+          <button class="btn-password" onclick="openPasswordModal()">Wachtwoord Wijzigen</button>
+        </div>
+
+        <div class="admin-link" id="adminPanelLink" style="display: none;" onclick="loadGame(null, 'Admin.html')">
+          ⚙️ Admin Beheer
+        </div>
+
+        <button class="btn-logout" onclick="logout()">Uitloggen</button>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <iframe id="mainFrame" name="mainFrame" src="Home.html?v=3"></iframe>
+    </div>
   </div>
 
   <div class="modal-overlay" id="passwordModal">
@@ -142,6 +166,52 @@
     if (currentRole === "Opper Gringo") {
       document.getElementById("adminPanelLink").style.display = "flex";
     }
+  }
+
+  // CONTROLEER AUTOMATISCH OF ER HUUR VERVALT OVER ≤ 7 DAGEN
+  async function checkRentRemindersBanner() {
+    const { data } = await _supabase.from('warehouse_reminders').select('*').eq('is_paid', false);
+    if (!data || data.length === 0) return;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    let urgentReminders = [];
+
+    data.forEach(rem => {
+      if (rem.due_date) {
+        const dueDate = new Date(rem.due_date);
+        dueDate.setHours(0,0,0,0);
+        const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 7) {
+          urgentReminders.push({ title: rem.title, days: diffDays, amount: rem.amount });
+        }
+      }
+    });
+
+    if (urgentReminders.length > 0 && !sessionStorage.getItem("rentAlertClosed")) {
+      const banner = document.getElementById("rentAlertBanner");
+      const msgElem = document.getElementById("rentAlertMsg");
+      
+      const first = urgentReminders[0];
+      let alertTxt = "";
+      if (first.days < 0) {
+        alertTxt = `⚠️ **HUUR VERLOPEN!** "${first.title}" is ${Math.abs(first.days)} dag(en) geleden verlopen! (${first.amount ? '€ ' + parseFloat(first.amount).toLocaleString('nl-NL') : ''})`;
+      } else if (first.days === 0) {
+        alertTxt = `⚠️ **HUUR VERVALT VANDAAG!** "${first.title}" moet vandaag worden betaald/verlengd! (${first.amount ? '€ ' + parseFloat(first.amount).toLocaleString('nl-NL') : ''})`;
+      } else {
+        alertTxt = `⚠️ **HUUR HERINNERING:** "${first.title}" vervalt over ${first.days} dag(en)! (${first.amount ? '€ ' + parseFloat(first.amount).toLocaleString('nl-NL') : ''})`;
+      }
+
+      msgElem.innerText = alertTxt;
+      banner.style.display = "flex";
+    }
+  }
+
+  function closeRentAlert() {
+    document.getElementById("rentAlertBanner").style.display = "none";
+    sessionStorage.setItem("rentAlertClosed", "true");
   }
 
   function loadGame(element, url) {
@@ -200,6 +270,8 @@
     sessionStorage.clear();
     window.location.href = "Login.html";
   }
+
+  checkRentRemindersBanner();
 </script>
 
 </body>
