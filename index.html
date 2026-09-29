@@ -29,6 +29,7 @@
     .nav-item.active { background-color: #232730; color: #fbbf24; font-weight: 600; }
     .nav-item.active-wiet { background-color: #232730; color: #22c55e; font-weight: 600; }
     .nav-item.active-finance { background-color: #232730; color: #38bdf8; font-weight: 600; }
+    .nav-item.active-magazijn { background-color: #232730; color: #a855f7; font-weight: 600; }
     .nav-item .arrow { font-size: 0.75rem; color: #475569; }
 
     .user-section { padding-top: 16px; border-top: 1px solid #232730; }
@@ -87,6 +88,10 @@
           <span>💰 Bende Financiën</span>
           <span class="arrow">&gt;</span>
         </li>
+        <li class="nav-item" id="navMagazijn" onclick="loadGame(this, 'Magazijn.html')">
+          <span>🏬 Magazijn & Huur</span>
+          <span class="arrow">&gt;</span>
+        </li>
       </ul>
     </div>
 
@@ -106,7 +111,7 @@
   </div>
 
   <div class="content-area">
-    <iframe id="mainFrame" name="mainFrame" src="Home.html?v=3"></iframe>
+    <iframe id="mainFrame" name="mainFrame" src="MinigamesHome.html?v=3"></iframe>
   </div>
 
   <div class="modal-overlay" id="passwordModal">
@@ -140,13 +145,15 @@
   }
 
   function loadGame(element, url) {
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active', 'active-wiet', 'active-finance'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active', 'active-wiet', 'active-finance', 'active-magazijn'));
     
     if (element) {
       if (url.includes('Wiet_Ingave')) {
         element.classList.add('active-wiet');
       } else if (url.includes('Financien')) {
         element.classList.add('active-finance');
+      } else if (url.includes('Magazijn')) {
+        element.classList.add('active-magazijn');
       } else {
         element.classList.add('active');
       }
@@ -156,7 +163,7 @@
   }
 
   function openHome() {
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active', 'active-wiet', 'active-finance'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active', 'active-wiet', 'active-finance', 'active-magazijn'));
     document.getElementById("mainFrame").src = "Home.html";
   }
 
